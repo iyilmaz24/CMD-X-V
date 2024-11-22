@@ -12,7 +12,10 @@ func main() {
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/snippet/create", snippetCreate)
 	mux.HandleFunc("/snippet/view?id=1", snippetView)
-	
+
+	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
 		port = ":4000"
