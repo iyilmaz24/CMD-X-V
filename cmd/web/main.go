@@ -7,22 +7,19 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/iyilmaz24/CMD-X-V.git/internal/models"
 )
 
 type application struct {
 	errorLog *log.Logger	
 	infoLog *log.Logger	
+	snippets *models.SnippetModel
 }
 
 func main() {
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-
-	app := &application{
-		errorLog: errorLog,
-		infoLog: infoLog,
-	}
 
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
@@ -39,6 +36,12 @@ func main() {
 		errorLog.Fatal(err)
 	}
 	defer db.Close()
+
+	app := &application{
+		errorLog: errorLog,
+		infoLog: infoLog,
+		snippets: &models.SnippetModel{DB: db},
+	}
 
 	srv := &http.Server{
 		Addr:     port,
