@@ -1,9 +1,12 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type application struct {
@@ -26,6 +29,17 @@ func main() {
 		port = ":4000"
 	}
 
+	dsn, ok := os.LookupEnv("DSN")
+	if !ok {
+		errorLog.Fatal("DSN not set in environment variables")
+	}
+
+	db, err := openDB(dsn)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+	defer db.Close()
+
 	srv := &http.Server{
 		Addr:     port,
 		ErrorLog: errorLog,
@@ -33,6 +47,19 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on %v", port)
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+
+	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
