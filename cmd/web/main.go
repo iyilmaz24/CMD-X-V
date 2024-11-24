@@ -6,22 +6,33 @@ import (
 	"os"
 )
 
+type application struct {
+	errorLog *log.Logger	
+	infoLog *log.Logger	
+}
+
 func main() {
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/snippet/create", snippetCreate)
-	mux.HandleFunc("/snippet/view?id=1", snippetView)
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	app := &application{
+		errorLog: errorLog,
+		infoLog: infoLog,
+	}
 
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
 		port = ":4000"
 	}
 
-	log.Printf("Starting server on %v", port)
-	err := http.ListenAndServe(port, mux)
-	log.Fatal(err)
+	srv := &http.Server{
+		Addr:     port,
+		ErrorLog: errorLog,
+		Handler:  app.routes(),
+	}
+
+	infoLog.Printf("Starting server on %v", port)
+	err := srv.ListenAndServe()
+	errorLog.Fatal(err)
 }
