@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"text/template"
 
 	"github.com/iyilmaz24/CMD-X-V.git/internal/models"
 )
@@ -15,32 +16,32 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	snippets, err := app.snippets.Latest()
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
-
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%v\n", snippet)
-	}
-
-	// files := []string{
-	// 	"./ui/html/pages/base.tmpl",
-	// 	"./ui/html/partials/nav.tmpl",
-	// 	"./ui/html/pages/home.tmpl",
-	// }
-
-	// ts, err := template.ParseFiles(files...)
+	// snippets, err := app.snippets.Latest()
 	// if err != nil {
 	// 	app.serverError(w, err)
 	// 	return
 	// }
 
-	// err = ts.ExecuteTemplate(w, "base", nil)
-	// if err != nil {
-	// 	app.serverError(w, err)
+	// for _, snippet := range snippets {
+	// 	fmt.Fprintf(w, "%v\n", snippet)
 	// }
+
+	files := []string{
+		"./ui/html/pages/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/home.tmpl",
+	}
+
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	err = ts.ExecuteTemplate(w, "base", nil)
+	if err != nil {
+		app.serverError(w, err)
+	}
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
@@ -72,8 +73,6 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(intId)
-
 	snippet, err := app.snippets.Get(intId)
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
@@ -84,5 +83,20 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "%+v", snippet)
+	files := []string{
+		"./ui/html/pages/base.tmpl", 
+		"./ui/html/partials/nav.tmpl", 
+		"./ui/html/pages/view.tmpl",
+	}
+
+	ts, err := template.ParseFiles(files...) 
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	err = ts.ExecuteTemplate(w, "base", snippet)
+	if err != nil {
+		app.serverError(w, err) 
+	}
 }
